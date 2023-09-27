@@ -37,7 +37,7 @@ class CreateComment:
     async def run(self, text):
         bing = await Chatbot.create(cookies=self.cookies)
         # self.run("다음 내용에 적절한 댓글을 200자 내로 작성해줘")
-        response = await bing.ask(prompt="다음 내용에 적절한 댓글을 200자 내로 작성해줘"+text, conversation_style=ConversationStyle.creative)
+        response = await bing.ask(prompt="다음 내용에 적절한 댓글을 200자 내로 작성해줘: "+text, conversation_style=ConversationStyle.creative)
         # print(response)
         response = response['item']['messages']
         comment = ""
