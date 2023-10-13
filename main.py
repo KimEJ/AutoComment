@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import threading
 from PySide6.QtWidgets import *
@@ -17,9 +18,12 @@ class MyApp(QWidget):
     def __init__(self):
         super().__init__()
         self.init_UI()
-        self.create_comment = CreateComment.CreateComment(
-            cookies=json.loads(open("./bing_cookies_test.json", encoding="utf-8").read())
-        )
+        cookies, ok = QInputDialog.getText(self, '_U값을 입력 해 주세요', 'Enter _U Value:')
+        if ok:
+            os.environ["BING_U_COOKIE"] = cookies
+        else:
+            exit()
+        self.create_comment = CreateComment.CreateComment()
 
     def init_UI(self):
         self.table_widget = QTableWidget()
@@ -46,7 +50,7 @@ class MyApp(QWidget):
 
         self.loading = QProgressBar()
 
-        self.version = QLabel('v1.2.0')
+        self.version = QLabel('v1.3.0')
 
         self.table_widget.cellClicked.connect(self.set_position)
         
@@ -176,9 +180,7 @@ class CreateComments(QRunnable):
     @Slot()  # QtCore.Slot
     def run(self):
         try:
-            # cookies = json.loads(open("./bing_cookies_test.json", encoding="utf-8").read())
             for index, url  in enumerate(self.urls):
-                
                 print("=====================================")
                 print(index, url)
                 text = BlogParser.blog_parser(url)
