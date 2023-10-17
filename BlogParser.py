@@ -23,6 +23,7 @@ def text_scrapping(url):
     if soup:
         text = soup.get_text()
         text = text.replace('\n', ' ')
+        text = text.replace('  ', ' ')
     else:
         text = "None"
 

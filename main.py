@@ -10,6 +10,7 @@ import asyncio
 import BlogParser
 import CreateComment
 import Export
+from LoginDialog import LoginDialog
 
 class MyApp(QWidget):
 
@@ -17,20 +18,17 @@ class MyApp(QWidget):
         super().__init__()
         self.init_UI()
         self.loop = asyncio.get_event_loop()
-        token, ok = QInputDialog.getText(self, 'access token 값을 입력 해 주세요', 'Enter Token Value:')
-        # ok = True
-        # token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NjhkM2FhMTU5N2UzNWRiN2QzYmVjMCIsImVtYWlsIjoia2ltdWo1MDkwQGdtYWlsLmNvbSIsInByb3ZpZGVyIjoiZ29vZ2xlIiwiaWF0IjoxNjk3NTMwMzc2LCJleHAiOjE2OTc1MzM5NzZ9.xlGNiPd5LPZdiYK-M12AOCxZ8Tax1Wx2Aht3D1KUB5Q"
-        if ok:
-            self.create_comment = CreateComment.CreateComment(token)
-            # self.token = token
-            self.loop.run_until_complete(self.create_chat())
-            # self.create_comment = CreateComment.CreateComment(cookies)
-        else:
-            exit()
-
-    async def create_chat(self):
-        # await self.create_comment.get_session()
-        await self.create_comment.create_chat()
+        dialog = LoginDialog(labels=["id","token"])
+        if dialog.exec() == QDialog.Accepted:
+            id, token = dialog.getInputs()
+        # id='W1.2.25010157537361170005373651440256024.fIbV3U1xQUa4gxvpTIgqt.1697537393007'
+        # token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NjhkM2FhMTU5N2UzNWRiN2QzYmVjMCIsImlhdCI6MTY5NzUzNzQwNCwiZXhwIjoxNjk4MTQyMjA0fQ.XAPbkS2xaDBiEPrgd6Qu3QZhVK3ppTxKIlR4FJcwcGM'
+            self.create_comment = CreateComment.CreateComment(token, id)
+        # else:
+        #     exit()
+            
+    # async def create_chat(self):
+        # await self.create_comment.create_chat()
 
     def init_UI(self):
         self.table_widget = QTableWidget()
@@ -171,7 +169,7 @@ class MyApp(QWidget):
         self.export_button.setEnabled(True)
 
     def closeEvent(self, QCloseEvent):
-        self.loop.run_until_complete(self.create_comment.delete_chat(None))
+        # self.loop.run_until_complete(self.create_comment.delete_chat(None))
         self.loop.close()  
 
 if __name__ == '__main__':
