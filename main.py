@@ -1,13 +1,11 @@
-import json
-import os
 import sys
-import threading
 from PySide6.QtWidgets import *
 # from PySide6.QtCore import QObject, Slot, Signal
-from PySide6.QtCore import QRunnable, Slot, QThreadPool
+from PySide6.QtCore import QRunnable, Slot, QThreadPool, QEventLoop
 import sys
-sys.stdout = open('output.txt','wt', encoding='utf8')
-sys.stderr = open('error.txt','wt', encoding='utf8')
+import asyncio
+# sys.stdout = open('output.txt','wt', encoding='utf8')
+# sys.stderr = open('error.txt','wt', encoding='utf8')
 
 import BlogParser
 import CreateComment
@@ -18,12 +16,21 @@ class MyApp(QWidget):
     def __init__(self):
         super().__init__()
         self.init_UI()
-        cookies, ok = QInputDialog.getText(self, '_U값을 입력 해 주세요', 'Enter _U Value:')
+        self.loop = asyncio.get_event_loop()
+        token, ok = QInputDialog.getText(self, '_U값을 입력 해 주세요', 'Enter _U Value:')
+        # ok = True
+        # token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NjhkM2FhMTU5N2UzNWRiN2QzYmVjMCIsImVtYWlsIjoia2ltdWo1MDkwQGdtYWlsLmNvbSIsInByb3ZpZGVyIjoiZ29vZ2xlIiwiaWF0IjoxNjk3NTMwMzc2LCJleHAiOjE2OTc1MzM5NzZ9.xlGNiPd5LPZdiYK-M12AOCxZ8Tax1Wx2Aht3D1KUB5Q"
         if ok:
-            os.environ["BING_U_COOKIE"] = cookies
+            self.create_comment = CreateComment.CreateComment(token)
+            # self.token = token
+            self.loop.run_until_complete(self.create_chat())
+            # self.create_comment = CreateComment.CreateComment(cookies)
         else:
             exit()
-        self.create_comment = CreateComment.CreateComment()
+
+    async def create_chat(self):
+        # await self.create_comment.get_session()
+        await self.create_comment.create_chat()
 
     def init_UI(self):
         self.table_widget = QTableWidget()
@@ -132,16 +139,6 @@ class MyApp(QWidget):
             self.table_widget.setItem(row, 1, QTableWidgetItem(''))
 
     def createComments(self):
-        self.count = 0
-        rows = self.table_widget.rowCount()
-        urls = []
-        for i in range(rows):
-            urls.append(self.table_widget.item(i, 0).text())
-        
-        worker = CreateComments(self.set_comments, self.set_error, urls, self.create_comment)
-
-        self.threadpool.start(worker)
-
         self.label.setText('댓글 생성 중...')
         self.add_URL_button.setEnabled(False)
         self.delete_URL_button.setEnabled(False)
@@ -149,17 +146,21 @@ class MyApp(QWidget):
         self.import_button.setEnabled(False)
         self.export_button.setEnabled(False)
 
-    def set_comments(self, index, comment):
-        # print(comment)
-        self.count += 1
-        self.table_widget.setItem(index, 1, QTableWidgetItem(comment))
-        if self.count == self.table_widget.rowCount():
-            self.label.setText('댓글 생성 완료')
-            self.add_URL_button.setEnabled(True)
-            self.delete_URL_button.setEnabled(True)
-            self.create_comment_button.setEnabled(True)
-            self.import_button.setEnabled(True)
-            self.export_button.setEnabled(True)
+        self.set_comments()
+
+    def set_comments(self):
+        rows = self.table_widget.rowCount()
+        futures = [asyncio.ensure_future(self.create_comment.chat(BlogParser.blog_parser(self.table_widget.item(i, 0).text()))) for i in range(rows)]
+        print("start: ", futures)
+        comment = self.loop.run_until_complete(asyncio.gather(*futures))
+        for index, comment in enumerate(comment):
+            self.table_widget.setItem(index, 1, QTableWidgetItem(comment))
+        self.label.setText('댓글 생성 완료')
+        self.add_URL_button.setEnabled(True)
+        self.delete_URL_button.setEnabled(True)
+        self.create_comment_button.setEnabled(True)
+        self.import_button.setEnabled(True)
+        self.export_button.setEnabled(True)
 
     def set_error(self, error):
         self.label.setText(error)
@@ -168,34 +169,10 @@ class MyApp(QWidget):
         self.create_comment_button.setEnabled(True)
         self.import_button.setEnabled(True)
         self.export_button.setEnabled(True)
-    
-class CreateComments(QRunnable):
-    def __init__(self, success, error, urls, create_comment):
-        super().__init__()
-        self.success = success
-        self.error = error
-        self.urls = urls
-        self.create_comment = create_comment
-  
-    @Slot()  # QtCore.Slot
-    def run(self):
-        try:
-            for index, url  in enumerate(self.urls):
-                print("=====================================")
-                print(index, url)
-                text = BlogParser.blog_parser(url)
-                print(text)
-                comment = self.create_comment.create_comment(text)
-                self.success(index, comment)
-                # comments.append(comment)
-                print(comment)
-                print("=====================================")
-            # self.success(comments)
-            return
-        except Exception as e:
-            print(e)
-            self.error(str(e))
-            return
+
+    def closeEvent(self, QCloseEvent):
+        self.loop.run_until_complete(self.create_comment.delete_chat(None))
+        self.loop.close()  
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
