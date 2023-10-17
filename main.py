@@ -17,7 +17,7 @@ class MyApp(QWidget):
         super().__init__()
         self.init_UI()
         self.loop = asyncio.get_event_loop()
-        token, ok = QInputDialog.getText(self, '_U값을 입력 해 주세요', 'Enter _U Value:')
+        token, ok = QInputDialog.getText(self, 'access token 값을 입력 해 주세요', 'Enter Token Value:')
         # ok = True
         # token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NjhkM2FhMTU5N2UzNWRiN2QzYmVjMCIsImVtYWlsIjoia2ltdWo1MDkwQGdtYWlsLmNvbSIsInByb3ZpZGVyIjoiZ29vZ2xlIiwiaWF0IjoxNjk3NTMwMzc2LCJleHAiOjE2OTc1MzM5NzZ9.xlGNiPd5LPZdiYK-M12AOCxZ8Tax1Wx2Aht3D1KUB5Q"
         if ok:
