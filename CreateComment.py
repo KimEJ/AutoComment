@@ -55,14 +55,15 @@ class CreateComment:
             print(response)
             return response
         
-    async def chat(self, text):
+    async def chat(self, item):
+        nick, title, text = item
         text = text[:1500]
         print("=====================================")
         print(text)
         print("\r\n")
-        async with self.session.post(url=f'https://studio-api.wow.wrtn.ai/store/tool/652dc61fa9dffe6d7497d932/generate', 
+        async with self.session.post(url=f'https://studio-api.wow.wrtn.ai/store/tool/65365852de87e16e67645c08/generate', 
                                      params={'model':'gpt-4', 'platform': 'web', 'user':self.user}, 
-                                     json={"inputs": [{"name": "본문", "value": text }],"model": "gpt-4"}, 
+                                     json={"inputs": [{"name": "아이디", "value": nick }, {"name": "제목", "value": title }, {"name": "내용", "value": text }],"model": "gpt-4"}, 
                                      headers={'Host': 'studio-api.wow.wrtn.ai', }) as request:
             print('run')
             response = await request.read()

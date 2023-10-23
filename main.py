@@ -148,11 +148,14 @@ class MyApp(QWidget):
 
     def set_comments(self):
         rows = self.table_widget.rowCount()
-        futures = [asyncio.ensure_future(self.create_comment.chat(BlogParser.blog_parser(self.table_widget.item(i, 0).text()))) for i in range(rows)]
-        print("start: ", futures)
-        comment = self.loop.run_until_complete(asyncio.gather(*futures))
-        for index, comment in enumerate(comment):
-            self.table_widget.setItem(index, 1, QTableWidgetItem(comment))
+        try:
+            futures = [asyncio.ensure_future(self.create_comment.chat(BlogParser.blog_parser(self.table_widget.item(i, 0).text()))) for i in range(rows)]
+            print("start: ", futures)
+            comment = self.loop.run_until_complete(asyncio.gather(*futures))
+            for index, comment in enumerate(comment):
+                self.table_widget.setItem(index, 1, QTableWidgetItem(comment))
+        except Exception as e:
+            self.label.setText(str(e))
         self.label.setText('댓글 생성 완료')
         self.add_URL_button.setEnabled(True)
         self.delete_URL_button.setEnabled(True)
